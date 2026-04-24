@@ -1,0 +1,101 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            padding: 20px;
+        }
+
+        img {
+            max-width: 100%;
+            margin: 10px 0;
+        }
+
+        iframe {
+            margin: 10px 0;
+        }
+
+        .image-block {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 10px;
+        }
+
+        .doc-block {
+            margin: 15px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>{{ title }}</h1>
+
+    {% for page in pages %}
+
+    <h2>{{ page.title }}</h2>
+
+    {% for block in page.blocks %}
+
+    {% if block.type == "text" %}
+    <div class="text-block">
+        {{ block.content | safe }}
+    </div>
+
+    {% elif block.type == "image" %}
+    <div class="image-block">
+
+        {% if block.caption %}
+        <p><b>{{ block.caption }}</b></p>
+        {% endif %}
+
+        <img src="{{ block.content }}" alt="{{ block.alt_text or 'Imagen educativa' }}" />
+
+        {% if block.description %}
+        <p>{{ block.description }}</p>
+        {% endif %}
+    </div>
+
+    {% elif block.type == "video" %}
+    {% set video_url = block.content %}
+
+    {% if "watch?v=" in video_url %}
+    {% set video_id = video_url.split("watch?v=")[1].split("&")[0] %}
+    {% elif "youtu.be/" in video_url %}
+    {% set video_id = video_url.split("youtu.be/")[1].split("?")[0] %}
+    {% else %}
+    {% set video_id = "" %}
+    {% endif %}
+
+    {% if video_id %}
+    <iframe width="100%" height="300" src="https://www.youtube-nocookie.com/embed/{{ video_id }}" frameborder="0"
+        allowfullscreen>
+    </iframe>
+    {% endif %}
+
+    <p>
+        <a href="{{ block.content }}" target="_blank">
+            ▶ Ver video en YouTube
+        </a>
+    </p>
+
+    {% elif block.type == "document" %}
+    <div class="doc-block">
+        <a href="{{ block.content }}" download="{{ block.name }}" target="_blank">
+            📄 Descargar Documento: {{ block.name }}
+        </a>
+    </div>
+    {% endif %}
+
+    {% endfor %}
+
+    {% endfor %}
+
+</body>
+
+</html>

@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Recursos Educativos | SCORM Creator</title>
+    <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #C9005A;
+            --primary-dark: #A00048;
+            --primary-light: #FCE4EC;
+            --bg-body: #F8FAFC;
+            --bg-card: #FFFFFF;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --success-bg: #F0FDF4;
+            --success-text: #166534;
+            --success-border: #22C55E;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.5;
+        }
+
+        :focus-visible {
+            outline: 3px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .view {
+            display: none;
+        }
+
+        /* ════ LOGIN ════ */
+        #loginView {
+            display: none;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary) 0%, #7B0037 100%);
+        }
+
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-card h2 {
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+
+        .login-card p {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        #codeInput {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 0.95rem;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        #codeInput:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--bg-body);
+        }
+
+        .btn-login {
+            width: 100%;
+            margin-top: 1.5rem;
+            padding: 0.75rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-login:hover {
+            background: var(--primary-dark);
+        }
+
+        /* ════ TOPBAR ════ */
+        .topbar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .topbar-code {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: var(--bg-body);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .btn-icon {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: white;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .btn-icon:hover {
+            background: var(--bg-body);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* ════ LAYOUT ════ */
+        #appView {
+            min-height: 100vh;
+        }
+
+        .app-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr 450px;
+            height: calc(100vh - 60px);
+            gap: 0;
+        }
+
+        /* ════ SIDEBAR ════ */
+        .sidebar {
+            background: white;
+            border-right: 1px solid var(--border);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin: 1.5rem 0 0.5rem 0;
+            font-weight: 600;
+        }
+
+        .sidebar-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-main);
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .sidebar-btn:hover {
+            background: var(--bg-body);
+            color: var(--primary);
+        }
+
+        .sidebar-btn.primary-btn {
+            background: var(--primary);
+            color: white;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+
+        .sidebar-btn.primary-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .sidebar-btn.secondary-btn {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            margin-top: 0.5rem;
+            justify-content: center;
+        }
+
+        .sidebar-btn.secondary-btn:hover {
+            background: var(--primary-light);
+        }
+
+        /* ════ EDITOR AREA ════ */
+        .editor-main {
+            padding: 2rem;
+            overflow-y: auto;
+            background: var(--bg-body);
+        }
+
+        .editor-header {
+            max-width: 800px;
+            margin: 0 auto 2rem;
+        }
+
+        .editor-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .course-title-input {
+            font-size: 2rem;
+            font-weight: 700;
+            border: none;
+            background: transparent;
+            width: 100%;
+            color: var(--text-main);
+            padding: 0.5rem 0;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .course-title-input:focus {
+            outline: none;
+            border-bottom-color: var(--primary);
+        }
+
+        /* ════ BLOQUES ════ */
+        .block-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            transition: transform 0.2s;
+        }
+
+        .block-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 12px -2px rgb(0 0 0 / 0.1);
+        }
+
+        .block-type-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        .block-content {
+            margin: 1rem 0;
+        }
+
+        .field-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .field-input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s;
+        }
+
+        .field-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--bg-body);
+        }
+
+        textarea.field-input {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .file-hint {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+            font-style: italic;
+        }
+
+        .quill-editor {
+            height: 200px;
+            margin-bottom: 1rem;
+        }
+
+        .ql-toolbar.ql-snow {
+            border-color: var(--border);
+            border-radius: 8px 8px 0 0;
+            background: var(--bg-body);
+        }
+
+        .ql-container.ql-snow {
+            border-color: var(--border);
+            border-radius: 0 0 8px 8px;
+        }
+
+        .block-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .block-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: white;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+
+        .block-btn:hover {
+            background: var(--bg-body);
+        }
+
+        .block-btn.delete:hover {
+            background: #FEE2E2;
+            border-color: #DC2626;
+            color: #DC2626;
+        }
+
+        .block-btn.validate:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .feedback {
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            background: var(--success-bg);
+            color: var(--success-text);
+            border-left: 4px solid var(--success-border);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* ════ PREVIEW AREA ════ */
+        .preview-pane {
+            background: #E2E8F0;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-left: 1px solid var(--border);
+        }
+
+        .preview-header {
+            margin-bottom: 1rem;
+            color: var(--primary-dark);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .preview-container {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            overflow: hidden;
+            border: 8px solid #334155;
+            position: relative;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* ════ HISTORIAL ════ */
+        #historyView {
+            min-height: 100vh;
+        }
+
+        .history-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .course-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .course-card:hover {
+            box-shadow: 0 8px 12px -2px rgb(0 0 0 / 0.1);
+            transform: translateY(-2px);
+        }
+
+        .course-card h3 {
+            margin-top: 0;
+            color: var(--text-main);
+        }
+
+        .course-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .course-card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+
+        .course-card-actions a {
+            text-decoration: none;
+        }
+
+        /* ════ TOAST ════ */
+        #toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1E293B;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 99px;
+            font-weight: 500;
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+
+        #toast.show {
+            opacity: 1;
+        }
+
+        /* ════ RESPONSIVE ════ */
+        @media (max-width: 1200px) {
+            .app-layout {
+                grid-template-columns: 240px 1fr;
+            }
+
+            .preview-pane {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="toast" role="alert"></div>
+
+    <!-- ════ LOGIN ════ -->
+    <div class="view" id="loginView" style="display:flex;">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="brand" style="justify-content:center; margin-bottom: 1rem;">
+                    <span>🎓 Editor Educativo</span>
+                </div>
+                <h2>Bienvenido</h2>
+                <p>Ingresa tu código de acceso para comenzar.</p>
+                <input type="text" id="codeInput" placeholder="Ej: KL001" aria-label="Código de acceso" />
+                <button id="loginBtn" class="btn-login">Entrar al panel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════ APP ════ -->
+    <div class="view" id="appView">
+        <header class="topbar">
+            <div class="brand">🚀 Editor Educativo</div>
+            <div class="topbar-actions">
+                <span class="topbar-code" id="topbarCode"></span>
+                <button id="logoutBtn" class="btn-icon">Cerrar sesión</button>
+            </div>
+        </header>
+
+        <div class="app-layout">
+            <nav class="sidebar">
+                <h3>Contenido</h3>
+                <button class="sidebar-btn" id="addTextBtn">📝 Texto </button>
+                <button class="sidebar-btn" id="addImageBtn">🖼️ Imagen </button>
+                <button class="sidebar-btn" id="addVideoBtn">🎥 Video </button>
+                <button class="sidebar-btn" id="addDocumentBtn">📄 Documento / PDF</button>
+
+                <h3>Gestión</h3>
+                <button class="sidebar-btn" id="historyBtn">📚 Mis Cursos</button>
+                <button class="sidebar-btn secondary-btn" id="saveBtn">💾 Guardar Progreso</button>
+                <button class="sidebar-btn primary-btn" id="generateBtn">🚀 Exportar SCORM</button>
+            </nav>
+
+            <main class="editor-main">
+                <div class="editor-header">
+                    <label for="title" class="editor-label">TÍTULO DEL CURSO</label>
+                    <input id="title" class="course-title-input" placeholder="Nombre de tu lección..." />
+                    <small class="file-hint">No usar caracteres especiales</small>
+                </div>
+                <div id="blocks"></div>
+            </main>
+
+            <aside class="preview-pane">
+                <h3 class="preview-header">Vista Previa en Tiempo Real</h3>
+                <div class="preview-container">
+                    <iframe id="preview" title="Vista previa del contenido"></iframe>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- ════ HISTORIAL ════ -->
+    <div class="view" id="historyView">
+        <header class="topbar">
+            <div class="brand">📚 Mi Biblioteca de Cursos</div>
+            <button id="backToEditorBtn" class="btn-icon">⬅ Volver al Editor</button>
+        </header>
+        <div class="history-container">
+            <div id="historyList" class="history-grid"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+
+    <script>
+
+        /* ─── ESTADO GLOBAL ─────────────────────────────────── */
+        const state = {
+            blocks: [],
+            editors: {},
+            previewTimeout: null,
+            aiTimers: {},
+            currentCourseId: null
+        };
+
+        /* ─── UTILIDADES ─────────────────────────────────── */
+
+        function showView(id) {
+            document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+            const el = document.getElementById(id);
+            if (id === 'loginView') {
+                el.style.display = 'flex';
+            } else {
+                el.style.display = 'block';
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        async function apiFetch(url, options = {}) {
+            try {
+                const res = await fetch(url, options);
+                if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+                return await res.json();
+            } catch (err) {
+                showToast('⚠️ Error de conexión: ' + err.message);
+                throw err;
+            }
+        }
+
+        function sanitizeText(str) {
+            const div = document.createElement('div');
+            div.textContent = String(str || '');
+            return div.innerHTML;
+        }
+
+        /* ─── NAVEGACIÓN ─────────────────────────────────── */
+
+        function goToHistory() {
+            showView('historyView');
+            loadCourses();
+        }
+
+        function goToEditor() {
+            showView('appView');
+        }
+
+        /* ─── AUTH ───────────────────────────────────────── */
+
+        async function login() {
+            const code = document.getElementById('codeInput').value.trim();
+            if (!code) {
+                showToast('Ingresa un código de acceso');
+                return;
+            }
+
+            try {
+                const data = await apiFetch(`/course/auth/${code}`);
+                if (data.valid) {
+                    localStorage.setItem('code', code);
+                    document.getElementById('topbarCode').textContent = code;
+                    showView('appView');
+                    render();
+                } else {
+                    showToast('❌ Código inválido');
+                }
+            } catch (_) { }
+        }
+
+        function logout() {
+            localStorage.removeItem('code');
+            state.blocks = [];
+            state.editors = {};
+            state.currentCourseId = null;
+            showView('loginView');
+        }
+
+        /* ─── HISTORIAL ──────────────────────────────────── */
+
+        async function loadCourses() {
+            const code = localStorage.getItem('code');
+            const container = document.getElementById('historyList');
+            container.innerHTML = '<p style="text-align:center; grid-column:1/-1;">Cargando biblioteca...</p>';
+
+            try {
+                const courses = await apiFetch(`/course/history/${code}`);
+                container.innerHTML = '';
+
+                if (!courses.length) {
+                    container.innerHTML = '<p style="text-align:center; grid-column:1/-1;">Aún no tienes cursos guardados.</p>';
+                    return;
+                }
+
+                courses.forEach(c => {
+                    const card = document.createElement('div');
+                    card.className = 'course-card';
+
+                    const title = document.createElement('h3');
+                    title.textContent = sanitizeText(c.title || 'Sin título');
+
+                    const meta = document.createElement('p');
+                    meta.textContent = c.url ? '📦 Terminado' : '📝 Borrador';
+
+                    const actions = document.createElement('div');
+                    actions.className = 'course-card-actions';
+
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'btn-icon';
+                    editBtn.textContent = '✏️ Editar';
+                    editBtn.addEventListener('click', () => editCourse(c));
+
+                    const dlLink = document.createElement('a');
+                    dlLink.className = 'btn-icon';
+                    dlLink.textContent = '⬇️ SCORM';
+                    dlLink.href = c.url || '#';
+                    dlLink.target = '_blank';
+                    dlLink.rel = 'noopener noreferrer';
+                    if (!c.url) dlLink.style.opacity = '0.4';
+
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'btn-icon';
+                    delBtn.textContent = '🗑️ Eliminar';
+                    delBtn.addEventListener('click', () => deleteCourse(c.id));
+
+                    actions.append(editBtn, dlLink, delBtn);
+                    card.append(title, meta, actions);
+                    container.appendChild(card);
+                });
+            } catch (_) { }
+        }
+
+        function editCourse(c) {
+            state.currentCourseId = c.id;
+            document.getElementById('title').value = c.title || '';
+            state.blocks = (c.pages && c.pages[0] && c.pages[0].blocks) ? c.pages[0].blocks : [];
+            state.editors = {};
+            render();
+            goToEditor();
+        }
+
+        async function deleteCourse(id) {
+            if (!confirm('¿Eliminar este curso? Esta acción no se puede deshacer.')) return;
+
+            try {
+                await apiFetch(`/course/${id}`, { method: 'DELETE' });
+                showToast('✅ Curso eliminado');
+                loadCourses();
+            } catch (_) { }
+        }
+
+        /* ─── BLOQUES ────────────────────────────────────── */
+
+        function debouncePreview() {
+            clearTimeout(state.previewTimeout);
+            state.previewTimeout = setTimeout(updatePreview, 600);
+        }
+
+        function debounceIA(index) {
+            clearTimeout(state.aiTimers[index]);
+            state.aiTimers[index] = setTimeout(() => {
+                if (!state.blocks[index].validated) {
+                    validateBlock(index);
+                }
+            }, 2000);
+        }
+
+        function addBlock(type) {
+            state.blocks.push({
+                type,
+                content: '',
+                feedback: '',
+                validated: false
+            });
+            render();
+        }
+
+        function deleteBlock(i) {
+            state.blocks.splice(i, 1);
+            render();
+        }
+
+        function moveUp(i) {
+            if (i === 0) return;
+            [state.blocks[i - 1], state.blocks[i]] = [state.blocks[i], state.blocks[i - 1]];
+            render();
+        }
+
+        function moveDown(i) {
+            if (i === state.blocks.length - 1) return;
+            [state.blocks[i + 1], state.blocks[i]] = [state.blocks[i], state.blocks[i + 1]];
+            render();
+        }
+
+        function update(i, value) {
+            const oldContent = state.blocks[i].content;
+            state.blocks[i].content = value;
+            debouncePreview();
+
+            if (oldContent !== value) {
+                state.blocks[i].validated = false;
+                state.blocks[i].feedback = '';
+            }
+
+            if (!state.blocks[i].validated && state.blocks[i].type === 'text') {
+                debounceIA(i);
+            }
+        }
+
+        function updateField(i, field, value) {
+            state.blocks[i][field] = value;
+            debouncePreview();
+        }
+
+        async function uploadImage(index, input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const data = await apiFetch('/course/upload-image', { method: 'POST', body: formData });
+                state.blocks[index].content = data.url;
+                render();
+            } catch (_) { }
+        }
+
+        async function uploadDocument(index, input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const data = await apiFetch('/course/upload-document', { method: 'POST', body: formData });
+                state.blocks[index].content = data.url;
+                state.blocks[index].name = file.name;
+                state.blocks[index].type = 'document';
+                render();
+                updatePreview();
+            } catch (_) { }
+        }
+
+        /* ─── RENDER ─────────────────────────────────────── */
+
+        function render() {
+            const container = document.getElementById('blocks');
+            container.innerHTML = '';
+            state.editors = {};
+
+            if (!state.blocks.length) {
+                container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <p>Usa el panel izquierdo para agregar bloques de contenido a tu curso.</p>
+      </div>
+    `;
+                debouncePreview();
+                return;
+            }
+
+            state.blocks.forEach((b, i) => {
+                let input = '';
+
+                if (b.type === 'text') {
+                    input = `<div id="editor-${i}" class="quill-editor"></div>`;
+                }
+
+                if (b.type === 'image') {
+                    input = `
+        <label class="field-label">URL de la imagen</label>
+        <input class="field-input" placeholder="https://..." value="${sanitizeText(b.content)}" oninput="update(${i}, this.value)" />
+        <label class="field-label">O sube un archivo</label>
+        <input class="field-input" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.svg" onchange="uploadImage(${i}, this)" />
+        <small class="file-hint">Formatos: JPG, PNG, GIF, WEBP, SVG</small>
+        <label class="field-label">Texto alternativo (accesibilidad)</label>
+        <input class="field-input" placeholder="Describe la imagen..." value="${sanitizeText(b.alt_text || '')}" oninput="updateField(${i}, 'alt_text', this.value)" />
+        <label class="field-label">Pie de imagen</label>
+        <input class="field-input" placeholder="Fuente o descripción breve..." value="${sanitizeText(b.caption || '')}" oninput="updateField(${i}, 'caption', this.value)" />
+        <label class="field-label">Descripción educativa</label>
+        <textarea class="field-input" placeholder="Explica el propósito de esta imagen..." oninput="updateField(${i}, 'description', this.value)">${sanitizeText(b.description || '')}</textarea>
+      `;
+                }
+
+                if (b.type === 'video') {
+                    input = `
+        <label class="field-label">URL del video</label>
+        <input class="field-input" placeholder="https://youtube.com/watch?v=..." value="${sanitizeText(b.content)}" oninput="update(${i}, this.value)" />
+        <small class="file-hint">Compatible con YouTube, Vimeo y otros servicios embebibles</small>
+      `;
+                }
+
+                if (b.type === 'document') {
+                    input = `
+        <label class="field-label">URL del documento</label>
+        <input class="field-input" placeholder="https://..." value="${sanitizeText(b.content || '')}" oninput="update(${i}, this.value)" />
+        <label class="field-label">O sube un archivo</label>
+        <input class="field-input" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt" onchange="uploadDocument(${i}, this)" />
+        <small class="file-hint">Formatos: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT</small>
+      `;
+                }
+
+                const blockEl = document.createElement('div');
+                blockEl.className = 'block-card';
+                blockEl.innerHTML = `
+      <span class="block-type-badge">${b.type.toUpperCase()}</span>
+      <div class="block-content">
+        ${input}
+      </div>
+      ${b.feedback ? `<div class="feedback">💡 <b>Sugerencia IA:</b> ${sanitizeText(b.feedback)}</div>` : ''}
+      <div class="block-actions">
+        <button class="block-btn validate" data-action="validate" data-index="${i}">✨ Analizar con IA</button>
+        <button class="block-btn" data-action="up" data-index="${i}">▲</button>
+        <button class="block-btn" data-action="down" data-index="${i}">▼</button>
+        <button class="block-btn delete" data-action="delete" data-index="${i}">🗑️ Eliminar</button>
+      </div>
+    `;
+
+                blockEl.querySelectorAll('[data-action]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const idx = parseInt(btn.dataset.index, 10);
+                        const action = btn.dataset.action;
+                        if (action === 'validate') validateBlock(idx);
+                        if (action === 'up') moveUp(idx);
+                        if (action === 'down') moveDown(idx);
+                        if (action === 'delete') deleteBlock(idx);
+                    });
+                });
+
+                container.appendChild(blockEl);
+            });
+
+            initializeEditors();
+            debouncePreview();
+        }
+
+        function initializeEditors() {
+            state.blocks.forEach((b, i) => {
+                if (b.type === 'text') {
+                    const quill = new Quill(`#editor-${i}`, {
+                        theme: 'snow',
+                        modules: {
+                            toolbar: [
+                                [{ header: [1, 2, 3, false] }],
+                                ['bold', 'italic', 'underline'],
+                                [{ list: 'ordered' }, { list: 'bullet' }],
+                                ['link']
+                            ]
+                        }
+                    });
+
+                    quill.root.innerHTML = b.content || '';
+
+                    quill.on('text-change', function () {
+                        state.blocks[i].content = quill.root.innerHTML;
+                        debouncePreview();
+                        debounceIA(i);
+                    });
+
+                    state.editors[i] = quill;
+                }
+            });
+        }
+
+        /* ─── PREVIEW ────────────────────────────────────── */
+
+        async function updatePreview() {
+            const course = {
+                title: document.getElementById('title').value,
+                pages: [{ title: '', blocks: state.blocks }]
+            };
+
+            try {
+                const data = await apiFetch('/course/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(course)
+                });
+                document.getElementById('preview').srcdoc = data.html;
+            } catch (_) { }
+        }
+
+        /* ─── VALIDACIÓN IA ──────────────────────────────── */
+
+        async function validateBlock(i) {
+            if (!state.blocks[i].content || state.blocks[i].content.length < 5) return;
+
+            try {
+                const data = await apiFetch('/ai/validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: state.blocks[i].content })
+                });
+
+                state.blocks[i].feedback = data.feedback;
+                state.blocks[i].validated = true;
+
+                render();
+            } catch (_) { }
+        }
+
+        /* ─── GUARDAR ────────────────────────────────────── */
+
+        async function saveCourse() {
+            const title = document.getElementById('title').value.trim();
+            if (!title) {
+                showToast('Agrega un título antes de guardar');
+                return;
+            }
+
+            const course = {
+                code: localStorage.getItem('code'),
+                title,
+                pages: [{ title: '', blocks: state.blocks }]
+            };
+
+            const url = state.currentCourseId
+                ? `/course/${state.currentCourseId}`
+                : '/course/save';
+
+            const method = state.currentCourseId ? 'PUT' : 'POST';
+
+            try {
+                const data = await apiFetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(course)
+                });
+                state.currentCourseId = data.id || state.currentCourseId;
+                showToast('✅ Borrador guardado correctamente');
+            } catch (_) { }
+        }
+
+        /* ─── EXPORTAR SCORM ─────────────────────────────── */
+
+        async function generate() {
+            const title = document.getElementById('title').value.trim();
+            if (!title) {
+                showToast('Agrega un título antes de exportar');
+                return;
+            }
+
+            const course = {
+                code: localStorage.getItem('code'),
+                title,
+                pages: [{ title: '', blocks: state.blocks }]
+            };
+
+            try {
+                const data = await apiFetch('/course/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(course)
+                });
+                window.open(data.file_url, '_blank');
+
+                // Resetear editor para nuevo proyecto
+                state.blocks = [];
+                state.editors = {};
+                state.currentCourseId = null;
+                document.getElementById('title').value = '';
+                render();
+                showToast('✅ Exportado. Editor listo para nuevo curso.');
+            } catch (_) { }
+        }
+
+        /* ─── EVENT LISTENERS ────────────────────────────── */
+
+        document.getElementById('loginBtn').addEventListener('click', login);
+        document.getElementById('codeInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') login();
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('historyBtn').addEventListener('click', goToHistory);
+        document.getElementById('backToEditorBtn').addEventListener('click', goToEditor);
+        document.getElementById('saveBtn').addEventListener('click', saveCourse);
+        document.getElementById('generateBtn').addEventListener('click', generate);
+
+        document.getElementById('addTextBtn').addEventListener('click', () => addBlock('text'));
+        document.getElementById('addImageBtn').addEventListener('click', () => addBlock('image'));
+        document.getElementById('addVideoBtn').addEventListener('click', () => addBlock('video'));
+        document.getElementById('addDocumentBtn').addEventListener('click', () => addBlock('document'));
+
+        document.getElementById('title').addEventListener('input', debouncePreview);
+
+        /* ─── INICIO ─────────────────────────────────────── */
+
+        (function init() {
+            const code = localStorage.getItem('code');
+            if (code) {
+                document.getElementById('topbarCode').textContent = code;
+                showView('appView');
+                render();
+            } else {
+                showView('loginView');
+            }
+        })();
+
+    </script>
+</body>
+
+</html>

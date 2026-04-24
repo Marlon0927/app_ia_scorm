@@ -1,0 +1,66 @@
+# =========================
+# 🐍 PYTHON
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+# =========================
+# 🔐 ENTORNO VIRTUAL
+# =========================
+env/
+venv/
+ENV/
+
+# =========================
+# 🔥 FIREBASE / CREDENCIALES
+# =========================
+*.json
+!package.json
+
+# ⚠️ EXCEPCIÓN (si usas otros JSON necesarios)
+# Ajusta según tu proyecto
+
+# =========================
+# 📦 ARCHIVOS GENERADOS
+# =========================
+output/
+uploads/
+documents/
+*.zip
+
+# =========================
+# 🖼️ MEDIA LOCAL
+# =========================
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+
+# (opcional: si quieres subir imágenes, elimina esto)
+
+# =========================
+# 🧪 TEST / CACHE
+# =========================
+.pytest_cache/
+.cache/
+
+# =========================
+# 💻 OS
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# ⚙️ IDE
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# 📝 LOGS
+# =========================
+*.log
