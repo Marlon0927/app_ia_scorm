@@ -22,7 +22,7 @@ for directory in DIRS_TO_CREATE:
 # =========================================================
 
 try:
-    from app.firebase import db, bucket
+    from app.services.firebase import db, bucket
     print("✅ Firebase importado correctamente")
 
 except Exception as e:
