@@ -90,20 +90,12 @@ except Exception as e:
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
 
-    if templates is None:
-        return "<h1>Templates no disponibles</h1>"
-
-    try:
-        return templates.TemplateResponse(
-            "index.html",
-            {"request": request}
-        )
-
-    except Exception as e:
-        print(f"❌ Error renderizando template: {e}")
-        traceback.print_exc()
-
-        return f"<h1>Error: {str(e)}</h1>"
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request
+        }
+    )
 
 # =========================================================
 # STATIC FILES
