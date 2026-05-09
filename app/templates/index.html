@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -732,6 +731,23 @@
             return div.innerHTML;
         }
 
+        // ✨ FUNCIÓN PARA LIMPIAR TEXTO DE LA IA
+        function cleanAIText(text) {
+            // Remover asteriscos (*) usados para negrita
+            text = text.replace(/\*\*/g, '').replace(/\*/g, '');
+            
+            // Remover etiquetas HTML comunes
+            text = text.replace(/<[^>]*>/g, '');
+            
+            // Remover múltiples espacios
+            text = text.replace(/\s+/g, ' ');
+            
+            // Remover guiones/viñetas extras
+            text = text.replace(/^[-•\s]+/gm, '');
+            
+            return text.trim();
+        }
+
         /* ─── NAVEGACIÓN ─────────────────────────────────── */
 
         function goToHistory() {
@@ -958,7 +974,6 @@
                 return;
             }
 
-
             const blockTypeTranslation = { 'text': 'Texto', 'image': 'Imagen', 'video': 'Video', 'document': 'Documento' };
 
             state.blocks.forEach((b, i) => {
@@ -1006,7 +1021,6 @@
                 blockEl.className = 'block-card';
                 blockEl.innerHTML = `
       <div class="block-header-top">
-
         <span class="block-type-badge">${blockTypeTranslation[b.type] || b.type}</span>
         <div class="block-actions">
           ${b.type === 'text' ? `<button class="block-btn validate" data-action="validate" data-index="${i}">✨ Analizar con IA</button>` : ''}
@@ -1020,7 +1034,7 @@
       </div>
       ${b.feedback ? `
         <div class="feedback-container">
-          <div class="feedback">💡 <b>Sugerencia IA:</b> ${sanitizeText(b.feedback)}</div>
+          <div class="feedback">💡 <b>Sugerencia IA:</b> ${sanitizeText(formatAIFeedback(b.feedback))}</div>
           <button class="btn-add-feedback" data-action="add-feedback" data-index="${i}">+ Agregar texto sugerido</button>
         </div>
       ` : ''}
@@ -1046,9 +1060,6 @@
         }
 
         function initializeEditors() {
-
-            const blockTypeTranslation = { 'text': 'Texto', 'image': 'Imagen', 'video': 'Video', 'document': 'Documento' };
-
             state.blocks.forEach((b, i) => {
                 if (b.type === 'text') {
                     const quill = new Quill(`#editor-${i}`, {
@@ -1106,11 +1117,9 @@
                     body: JSON.stringify({ text: state.blocks[i].content })
                 });
 
-                // Formatear la respuesta de la IA en bloques/párrafos
-                const formattedFeedback = formatAIFeedback(
-                    String(data.feedback || '')
-                );
-                state.blocks[i].feedback = formattedFeedback;
+                // 🔑 GUARDAR el feedback SIN FORMATEAR (texto plano)
+                const cleanedFeedback = cleanAIText(String(data.feedback || ''));
+                state.blocks[i].feedback = cleanedFeedback;
                 state.blocks[i].validated = true;
 
                 render();
@@ -1118,23 +1127,21 @@
         }
 
         function formatAIFeedback(feedback) {
-
-            if (typeof feedback !== 'string') {
-                feedback = JSON.stringify(feedback);
-            }
-
             let formatted = feedback;
 
+            // Reemplazar secciones con saltos de línea
             formatted = formatted.replace(/Veredicto:/g, '\n\n📋 VEREDICTO:\n');
             formatted = formatted.replace(/Observaciones:/g, '\n\n👀 OBSERVACIONES:\n');
             formatted = formatted.replace(/Sugerencias:/g, '\n\n💡 SUGERENCIAS:\n');
             formatted = formatted.replace(/Sugerencias de ACCESIBILIDAD:/g, '\n\n♿ ACCESIBILIDAD:\n');
             formatted = formatted.replace(/Texto Sugerido:/g, '\n\n✏️ TEXTO SUGERIDO:\n');
 
+            // Reemplazar guiones con viñetas
             formatted = formatted.replace(/- /g, '\n• ');
 
-            formatted = formatted.replace(/\n\n/g, '<br><br>');
-            formatted = formatted.replace(/\n/g, '<br>');
+            // Convertir saltos de línea en HTML
+            formatted = formatted.replace(/\n\n/g, '•');
+            formatted = formatted.replace(/\n/g, '');
 
             return formatted;
         }
@@ -1143,30 +1150,47 @@
             const feedback = state.blocks[i].feedback;
             if (!feedback) return;
 
-            // Buscar "✏️ TEXTO SUGERIDO:"
-            const marker = '✏️ TEXTO SUGERIDO:';
-            const idx = feedback.indexOf(marker);
+            // Buscar "Texto Sugerido:" (sin emojis, texto plano)
+            const markerVariants = [
+                'Texto Sugerido:',
+                'TEXTO SUGERIDO:',
+                'texto sugerido:'
+            ];
 
-            if (idx === -1) return;
+            let suggestedText = '';
+            let idx = -1;
 
-            // Extraer SOLO el contenido después del marcador
-            let suggestedText = feedback.substring(idx + marker.length);
+            for (const marker of markerVariants) {
+                idx = feedback.indexOf(marker);
+                if (idx !== -1) {
+                    suggestedText = feedback.substring(idx + marker.length).trim();
+                    break;
+                }
+            }
 
-            // Remover <br> y espacios al inicio
-            suggestedText = suggestedText.replace(/^(<br>)+/, '').trim();
-            suggestedText = suggestedText.replace(/^\s+/, '').trim();
+            if (idx === -1) {
+                showToast('⚠️ No se encontró sección de texto sugerido');
+                return;
+            }
 
-            // Dividir por <br> y filtrar líneas vacías para limpiar
-            const lines = suggestedText.split('<br>').map(l => l.trim()).filter(l => l.length > 0);
-            suggestedText = lines.join('</p><p>');
+            // Ya está limpio (sin <br>, sin *), solo remover espacios extras
+            suggestedText = suggestedText.replace(/\s+/g, ' ').trim();
+
+            // Crear párrafos separados por puntos
+            const sentences = suggestedText.split(/(?<=[.!?])\s+/).filter(s => s.length > 0);
+            let finalText = sentences.map(s => s.trim()).filter(s => s.length > 0).join('</p><p>');
+
+            if (finalText) {
+                finalText = `<p>${finalText}</p>`;
+            }
 
             if (state.blocks[i].type === 'text' && state.editors[i]) {
                 const quill = state.editors[i];
-                quill.root.innerHTML = `<p>${suggestedText}</p>`;
-                state.blocks[i].content = `<p>${suggestedText}</p>`;
+                quill.root.innerHTML = finalText || suggestedText;
+                state.blocks[i].content = finalText || suggestedText;
                 showToast("✅ Texto sugerido agregado");
             } else {
-                state.blocks[i].content = suggestedText.replace(/<\/p><p>/g, ' ');
+                state.blocks[i].content = suggestedText;
                 showToast("✅ Texto sugerido agregado");
             }
 
@@ -1202,16 +1226,14 @@
                     body: JSON.stringify(course)
                 });
 
-                // 🔥 CLAVE: SIEMPRE guardar el ID
                 if (data.id) {
                     state.currentCourseId = data.id;
                 }
 
-                console.log("ID ACTUAL:", state.currentCourseId);
-
                 showToast('✅ Borrador guardado correctamente');
             } catch (_) { }
         }
+
         /* ─── EXPORTAR SCORM ─────────────────────────────── */
         async function generate() {
             const title = document.getElementById('title').value.trim();
@@ -1225,8 +1247,6 @@
                 showToast('⚠️ Debes guardar el curso primero');
                 return;
             }
-
-            console.log("EXPORTANDO CURSO ID:", state.currentCourseId);
 
             const course = {
                 id: state.currentCourseId,
@@ -1243,14 +1263,11 @@
                 });
 
                 window.open(data.file_url, '_blank');
-
                 showToast('✅ SCORM exportado correctamente');
-
-                // ❌ NO borres el ID automáticamente
-                // state.currentCourseId = null; ← ELIMINA ESTA LÍNEA
 
             } catch (_) { }
         }
+
         /* ─── EVENT LISTENERS ────────────────────────────── */
 
         document.getElementById('loginBtn').addEventListener('click', login);
