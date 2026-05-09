@@ -47,7 +47,15 @@ def validar_texto(texto: str):
     """
 
     try:
+
         response = model.generate_content(prompt)
-        return response.text
+
+        # 🔥 FORZAR STRING
+        if hasattr(response, "text"):
+            return str(response.text)
+
+        return str(response)
+
     except Exception as e:
+        print("ERROR GEMINI:", e)
         return f"Error IA: {str(e)}"
