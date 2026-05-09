@@ -4,31 +4,26 @@ import firebase_admin
 
 from firebase_admin import credentials, firestore, storage
 
-# =========================================
-# FIREBASE LOCAL O RENDER
-# =========================================
+firebase_credentials = os.getenv("FIREBASE_CREDENTIALS")
 
-if not firebase_admin._apps:
+if not firebase_credentials:
+    raise ValueError("FIREBASE_CREDENTIALS no existe")
 
-    firebase_json = os.getenv("FIREBASE_CREDENTIALS")
+try:
+    cred_dict = json.loads(firebase_credentials)
 
-    # ===== RENDER =====
-    if firebase_json:
-
-        cred_dict = json.loads(firebase_json)
-
-        cred = credentials.Certificate(cred_dict)
-
-    # ===== LOCAL =====
-    else:
-
-        cred = credentials.Certificate(
-            "app/proyecto-scorm-firebase-adminsdk-fbsvc-2fc2d9fb11.json"
-        )
+    cred = credentials.Certificate(cred_dict)
 
     firebase_admin.initialize_app(cred, {
         "storageBucket": "proyecto-scorm.firebasestorage.app"
     })
+
+    print("Firebase inicializado correctamente")
+
+except Exception as e:
+    print("ERROR FIREBASE:")
+    print(e)
+    raise e
 
 db = firestore.client()
 bucket = storage.bucket()
