@@ -41,3 +41,5 @@ try:
 
 except Exception as e:
     print(f"❌ Error Firebase: {e}")
+    
+print("VARIABLE:", firebase_credentials)
