@@ -4,35 +4,31 @@ import firebase_admin
 
 from firebase_admin import credentials, firestore, storage
 
-# ======================================
-# RENDER -> variable de entorno
-# LOCAL -> archivo json
-# ======================================
+# =========================================
+# FIREBASE LOCAL O RENDER
+# =========================================
 
-firebase_json = os.getenv("FIREBASE_CREDENTIALS")
+if not firebase_admin._apps:
 
-if firebase_json:
+    firebase_json = os.getenv("FIREBASE_CREDENTIALS")
 
-    # ===== PRODUCCIÓN / RENDER =====
-    firebase_dict = json.loads(firebase_json)
+    # ===== RENDER =====
+    if firebase_json:
 
-    firebase_dict["private_key"] = firebase_dict["private_key"].replace("\\n", "\n")
+        cred_dict = json.loads(firebase_json)
 
-    cred = credentials.Certificate(firebase_dict)
-
-else:
+        cred = credentials.Certificate(cred_dict)
 
     # ===== LOCAL =====
-    cred = credentials.Certificate(
-        "app/proyecto-scorm-firebase-adminsdk-fbsvc-2fc2d9fb11.json"
-    )
+    else:
 
-# evitar inicialización duplicada
-if not firebase_admin._apps:
+        cred = credentials.Certificate(
+            "app/proyecto-scorm-firebase-adminsdk-fbsvc-2fc2d9fb11.json"
+        )
+
     firebase_admin.initialize_app(cred, {
         "storageBucket": "proyecto-scorm.firebasestorage.app"
     })
 
 db = firestore.client()
-
 bucket = storage.bucket()
