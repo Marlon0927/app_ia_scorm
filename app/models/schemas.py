@@ -23,6 +23,7 @@ class Page(BaseModel):
 
 
 class Course(BaseModel):
+    id: Optional[str] = None   # ← AGREGAR ESTO
     title: str
     code: str   # 👈 AGREGA ESTO
     pages: List[Page]

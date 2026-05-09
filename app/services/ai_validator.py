@@ -26,6 +26,8 @@ def validar_texto(texto: str):
     - Un veredicto general
     - Observaciones concretas
     - Sugerencias puntuales respecto al contenido.
+    - Sugerentias de ACCESIBILIDAD para el texto analizado.
+    - Finalmente, un texto sugerido que mejore el original, teniendo en cuenta las observaciones y sugerencias anteriores.
 
     IMPORTANTE:
     - NO reescribas todo el texto
@@ -37,6 +39,7 @@ def validar_texto(texto: str):
     Veredicto: ...
     Observaciones: ...
     Sugerencias: ...
+    Texto Sugerido: ...
     
 
     Texto:

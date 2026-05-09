@@ -43,7 +43,7 @@ xmlns="http://www.imsglobal.org/xsd/imscp_v1p1">
 # =========================
 # CREAR SCORM
 # =========================
-def crear_scorm(html_content, title="curso", pages=None):
+def crear_scorm(html_content, title="curso", pages=None, course_id=None):
 
     base_path = "output/scorm_package"
 
@@ -138,7 +138,7 @@ def crear_scorm(html_content, title="curso", pages=None):
     # ZIP FINAL
     # =========================
     safe_title = title.replace(" ", "_")
-    zip_path = f"output/{safe_title}.zip"
+    zip_path = f"output/{course_id}.zip"
 
     with zipfile.ZipFile(zip_path, "w") as zipf:
         for root, _, files in os.walk(base_path):

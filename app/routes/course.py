@@ -1,10 +1,12 @@
 import os
+from urllib.parse import urlparse
 import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
+from app.models.schemas import Course
 from app.services.html_generator import generar_html
 from app.services.scorm import crear_scorm
 from app.services.firebase import db, bucket
@@ -107,6 +109,20 @@ def save_course(payload: dict):
         raise HTTPException(status_code=400, detail="Falta el código de usuario")
 
     try:
+        current_course_id = payload.get("currentCourseId")
+        
+        # Si ya existe un borrador, actualizar
+        if current_course_id:
+            doc_ref = db.collection("courses").document(current_course_id)
+            doc_ref.update({
+                "title": payload.get("title", "Sin título"),
+                "pages": payload.get("pages", []),
+                "updated_at": datetime.utcnow()
+            })
+            print(f"📝 Borrador actualizado: {current_course_id}")
+            return {"id": current_course_id}
+        
+        # Si no existe, crear nuevo borrador
         doc_ref = db.collection("courses").add({
             "code": code,
             "title": payload.get("title", "Sin título"),
@@ -115,7 +131,7 @@ def save_course(payload: dict):
             "created_at": datetime.utcnow()
         })
 
-        # doc_ref es una tupla (update_time, DocumentReference)
+        print(f"✅ Nuevo borrador creado: {doc_ref[1].id}")
         return {"id": doc_ref[1].id}
     except Exception as e:
         print(f"Error guardando curso: {e}")
@@ -149,75 +165,54 @@ def update_course(course_id: str, payload: dict):
 # 🎯 CREAR CURSO + EXPORTAR SCORM
 # ===============================
 @router.post("/create")
-def create_course(payload: dict):
-    """
-    Crea un curso, genera HTML, empaquet como SCORM y sube a storage.
-    """
-    try:
-        # Validar datos básicos
-        code = payload.get("code")
-        title = payload.get("title", "Sin título")
-        pages = payload.get("pages", [])
+def create_course(course: Course):
 
-        if not code:
-            raise HTTPException(status_code=400, detail="Falta el código de usuario")
-        
-        if not title:
-            raise HTTPException(status_code=400, detail="Falta el título del curso")
+    data = course.dict()
 
-        # Corregir rutas locales de imágenes
-        for page in pages:
-            for block in page.get("blocks", []):
-                if block.get("type") == "image" and block.get("content"):
-                    if block["content"].startswith("/uploads/"):
-                        block["content"] = block["content"][1:]
+    # 🔥 necesitas recibir course_id desde frontend
+    course_id = data.get("id")
 
-        print(f"📦 Generando SCORM para curso: {title}")
+    if not course_id:
+        raise HTTPException(status_code=400, detail="Falta course_id")
 
-        # Generar HTML
-        html = generar_html({
-            "title": title,
-            "pages": pages
-        })
+    doc_ref = db.collection("courses").document(course_id)
 
-        # Crear ZIP (SCORM)
-        zip_path = crear_scorm(html, title, pages)
-        print(f"✅ SCORM generado en: {zip_path}")
+    # corregir rutas
+    for page in data["pages"]:
+        for block in page["blocks"]:
+            if block["type"] == "image" and block.get("content"):
+                if block["content"].startswith("/uploads/"):
+                    block["content"] = block["content"][1:]
 
-        # Subir a Cloud Storage
-        file_url = upload_file(
-            zip_path,
-            f"{title}.zip",
-            code
-        )
-        print(f"✅ Archivo subido a: {file_url}")
+    html = generar_html(data)
 
-        # Guardar en Firestore
-        db.collection("courses").add({
-            "code": code,
-            "title": title,
-            "pages": pages,
-            "url": file_url,
-            "created_at": datetime.utcnow()
-        })
-        print(f"✅ Curso guardado en Firestore")
+    zip_path = crear_scorm(
+        html,
+        course.title,
+        data["pages"],
+        course_id
+    )
 
-        return {
-            "message": "SCORM generado exitosamente",
-            "file_url": file_url,
-            "title": title
-        }
+    file_url = upload_file(
+        zip_path,
+        f"{course.title}.zip",
+        course.code,
+        course_id
+    )
 
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"❌ Error en create_course: {type(e).__name__}: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error generando SCORM: {str(e)}"
-        )
+    # 🔥 ACTUALIZAR, NO CREAR
+    doc_ref.update({
+        "title": course.title,
+        "pages": data["pages"],
+        "url": file_url,
+        "status": "completed"
+    })
+
+    return {
+        "message": "SCORM actualizado",
+        "file_url": file_url
+    }
+
 
 
 # ===============================
@@ -260,16 +255,26 @@ def delete_course(id: str):
         # Eliminar archivo de Cloud Storage si existe
         if file_url:
             try:
-                path = file_url.split(".com/")[1]
-                blob = bucket.blob(path)
+                # Formato esperado:
+                # https://storage.googleapis.com/BUCKET_NAME/path/to/file.zip
+                parsed = urlparse(file_url)
+
+                path_parts = parsed.path.lstrip("/").split("/", 1)
+                blob_path = path_parts[1]
+
+                blob = bucket.blob(blob_path)
                 blob.delete()
-                print(f"✅ Archivo eliminado de storage: {path}")
+
+                print(f"✅ Archivo eliminado de storage: {blob_path}")
+
             except Exception as e:
                 print(f"⚠️ Error eliminando archivo de storage: {e}")
 
-        # Eliminar documento de Firestore
+        # Eliminar documento de Firestore (siempre)
         doc_ref.delete()
+
         return {"status": "deleted"}
+
     except HTTPException:
         raise
     except Exception as e:

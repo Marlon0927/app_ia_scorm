@@ -570,7 +570,7 @@
 
         .course-card-actions {
             display: flex;
-            gap: 0px;
+            gap: 10px;
             margin-top: 1rem;
         }
 
@@ -621,7 +621,7 @@
         <div class="login-container">
             <div class="login-card">
                 <div class="brand" style="justify-content:center; margin-bottom: 1rem;">
-                    <span>🎓 Editor educativo</span>
+                    <span>🎓 Editor Educativo</span>
                 </div>
                 <h2>Bienvenido</h2>
                 <p>Ingresa tu código de acceso para comenzar.</p>
@@ -634,7 +634,7 @@
     <!-- ════ APP ════ -->
     <div class="view" id="appView">
         <header class="topbar">
-            <div class="brand">🚀 Editor educativo</div>
+            <div class="brand">🚀 Studio Educativo</div>
             <div class="topbar-actions">
                 <span class="topbar-code" id="topbarCode"></span>
                 <button id="logoutBtn" class="btn-icon">Cerrar sesión</button>
@@ -644,27 +644,27 @@
         <div class="app-layout">
             <nav class="sidebar">
                 <h3>Contenido</h3>
-                <button class="sidebar-btn" id="addTextBtn">📝 Texto </button>
-                <button class="sidebar-btn" id="addImageBtn">🖼️ Imagen </button>
-                <button class="sidebar-btn" id="addVideoBtn">🎥 Video </button>
+                <button class="sidebar-btn" id="addTextBtn">📝 Texto Enriquecido</button>
+                <button class="sidebar-btn" id="addImageBtn">🖼️ Imagen Educativa</button>
+                <button class="sidebar-btn" id="addVideoBtn">🎥 Video Externo</button>
                 <button class="sidebar-btn" id="addDocumentBtn">📄 Documento / PDF</button>
 
                 <h3>Gestión</h3>
-                <button class="sidebar-btn" id="historyBtn">📚 Mis cursos</button>
-                <button class="sidebar-btn secondary-btn" id="saveBtn">💾 Guardar progreso</button>
+                <button class="sidebar-btn" id="historyBtn">📚 Mis Cursos</button>
+                <button class="sidebar-btn secondary-btn" id="saveBtn">💾 Guardar Progreso</button>
                 <button class="sidebar-btn primary-btn" id="generateBtn">🚀 Exportar SCORM</button>
             </nav>
 
             <main class="editor-main">
                 <div class="editor-header">
-                    <label for="title" class="editor-label">Título del curso</label>
+                    <label for="title" class="editor-label">TÍTULO DEL CURSO</label>
                     <input id="title" class="course-title-input" placeholder="Nombre de tu lección..." />
                 </div>
                 <div id="blocks"></div>
             </main>
 
             <aside class="preview-pane">
-                <h3 class="preview-header">Vista previa en tiempo real</h3>
+                <h3 class="preview-header">Vista Previa en Tiempo Real</h3>
                 <div class="preview-container">
                     <iframe id="preview" title="Vista previa del contenido"></iframe>
                 </div>
@@ -675,8 +675,8 @@
     <!-- ════ HISTORIAL ════ -->
     <div class="view" id="historyView">
         <header class="topbar">
-            <div class="brand">📚 Mi biblioteca de cursos</div>
-            <button id="backToEditorBtn" class="btn-icon">⬅ Volver al editor</button>
+            <div class="brand">📚 Mi Biblioteca de Cursos</div>
+            <button id="backToEditorBtn" class="btn-icon">⬅ Volver al Editor</button>
         </header>
         <div class="history-container">
             <div id="historyList" class="history-grid"></div>
@@ -766,12 +766,12 @@
         }
 
         function logout() {
-             localStorage.removeItem('code');
-             state.blocks = [];
-             state.editors = {};
-             state.currentCourseId = null;
-             showView('loginView');
-         }
+            localStorage.removeItem('code');
+            state.blocks = [];
+            state.editors = {};
+            state.currentCourseId = null;
+            showView('loginView');
+        }
 
         /* ─── HISTORIAL ──────────────────────────────────── */
 
@@ -809,7 +809,7 @@
 
                     const dlLink = document.createElement('a');
                     dlLink.className = 'btn-icon';
-                    dlLink.textContent = '  ⬇️ Descargar';
+                    dlLink.textContent = '⬇️ SCORM';
                     dlLink.href = c.url || '#';
                     dlLink.target = '_blank';
                     dlLink.rel = 'noopener noreferrer';
@@ -1009,7 +1009,7 @@
 
         <span class="block-type-badge">${blockTypeTranslation[b.type] || b.type}</span>
         <div class="block-actions">
-          ${b.type === 'text' ? `<button class="block-btn validate" data-action="validate" data-index="${i}">✨ Analizar con IA</button>` : ''}
+          <button class="block-btn validate" data-action="validate" data-index="${i}">✨ Analizar con IA</button>
           <button class="block-btn" data-action="up" data-index="${i}">▲</button>
           <button class="block-btn" data-action="down" data-index="${i}">▼</button>
           <button class="block-btn delete" data-action="delete" data-index="${i}">🗑️ Eliminar</button>
@@ -1197,35 +1197,21 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(course)
                 });
-
-                // 🔥 CLAVE: SIEMPRE guardar el ID
-                if (data.id) {
-                    state.currentCourseId = data.id;
-                }
-
-                console.log("ID ACTUAL:", state.currentCourseId);
-
+                state.currentCourseId = data.id || state.currentCourseId;
                 showToast('✅ Borrador guardado correctamente');
             } catch (_) { }
         }
+
         /* ─── EXPORTAR SCORM ─────────────────────────────── */
+
         async function generate() {
             const title = document.getElementById('title').value.trim();
-
             if (!title) {
                 showToast('Agrega un título antes de exportar');
                 return;
             }
 
-            if (!state.currentCourseId) {
-                showToast('⚠️ Debes guardar el curso primero');
-                return;
-            }
-
-            console.log("EXPORTANDO CURSO ID:", state.currentCourseId);
-
             const course = {
-                id: state.currentCourseId,
                 code: localStorage.getItem('code'),
                 title,
                 pages: [{ title: '', blocks: state.blocks }]
@@ -1237,16 +1223,18 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(course)
                 });
-
                 window.open(data.file_url, '_blank');
 
-                showToast('✅ SCORM exportado correctamente');
-
-                // ❌ NO borres el ID automáticamente
-                // state.currentCourseId = null; ← ELIMINA ESTA LÍNEA
-
+                // Resetear editor para nuevo proyecto
+                state.blocks = [];
+                state.editors = {};
+                state.currentCourseId = null;
+                document.getElementById('title').value = '';
+                render();
+                showToast('✅ Exportado. Editor listo para nuevo curso.');
             } catch (_) { }
         }
+
         /* ─── EVENT LISTENERS ────────────────────────────── */
 
         document.getElementById('loginBtn').addEventListener('click', login);
