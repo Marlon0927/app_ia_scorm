@@ -7,9 +7,19 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
-# =========================
+# =========================================================
+# CREAR DIRECTORIOS NECESARIOS
+# =========================================================
+
+DIRS_TO_CREATE = ["app/templates", "output", "uploads", "documents"]
+
+for directory in DIRS_TO_CREATE:
+    os.makedirs(directory, exist_ok=True)
+    print(f"✅ Directorio asegurado: {directory}")
+
+# =========================================================
 # FIREBASE
-# =========================
+# =========================================================
 
 try:
     from app.firebase import db, bucket
@@ -18,28 +28,13 @@ try:
 except Exception as e:
     print("❌ ERROR IMPORTANDO FIREBASE")
     traceback.print_exc()
-    raise
 
+    db = None
+    bucket = None
 
-# =========================
-# CREAR DIRECTORIOS
-# =========================
-
-DIRS_TO_CREATE = [
-    "app/templates",
-    "output",
-    "uploads",
-    "documents"
-]
-
-for directory in DIRS_TO_CREATE:
-    os.makedirs(directory, exist_ok=True)
-    print(f"✅ Directorio asegurado: {directory}")
-
-
-# =========================
-# FASTAPI
-# =========================
+# =========================================================
+# APP
+# =========================================================
 
 app = FastAPI(
     title="Editor Educativo SCORM",
@@ -47,10 +42,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
-
-# =========================
+# =========================================================
 # CORS
-# =========================
+# =========================================================
 
 app.add_middleware(
     CORSMiddleware,
@@ -60,24 +54,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# =========================
+# =========================================================
 # TEMPLATES
-# =========================
+# =========================================================
 
 try:
     templates = Jinja2Templates(directory="app/templates")
     print("✅ Templates cargadas correctamente")
 
 except Exception as e:
-    print("❌ Error cargando templates")
+    print(f"⚠️ Error cargando templates: {e}")
     traceback.print_exc()
     templates = None
 
-
-# =========================
-# IMPORTAR ROUTERS
-# =========================
+# =========================================================
+# IMPORTAR RUTAS DESPUÉS DE FIREBASE
+# =========================================================
 
 try:
     from app.routes import course, ai
@@ -85,17 +77,15 @@ try:
     app.include_router(course.router, prefix="/course")
     app.include_router(ai.router, prefix="/ai")
 
-    print("✅ Routers cargados")
+    print("✅ Rutas cargadas correctamente")
 
 except Exception as e:
-    print("❌ Error cargando routers")
+    print("❌ ERROR CARGANDO RUTAS")
     traceback.print_exc()
-    raise
 
-
-# =========================
-# RUTA PRINCIPAL
-# =========================
+# =========================================================
+# ROOT
+# =========================================================
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
@@ -110,45 +100,44 @@ def home(request: Request):
         )
 
     except Exception as e:
+        print(f"❌ Error renderizando template: {e}")
         traceback.print_exc()
-        return f"<h1>Error renderizando template: {str(e)}</h1>"
 
+        return f"<h1>Error: {str(e)}</h1>"
 
-# =========================
+# =========================================================
 # STATIC FILES
-# =========================
+# =========================================================
 
-try:
-    app.mount("/output", StaticFiles(directory="output"), name="output")
-    print("✅ /output montado")
+STATIC_DIRS = [
+    ("/output", "output"),
+    ("/uploads", "uploads"),
+    ("/documents", "documents")
+]
 
-except Exception:
-    traceback.print_exc()
+for route, directory in STATIC_DIRS:
 
-try:
-    app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-    print("✅ /uploads montado")
+    try:
+        app.mount(route, StaticFiles(directory=directory), name=directory)
+        print(f"✅ Static mounted: {route}")
 
-except Exception:
-    traceback.print_exc()
+    except Exception as e:
+        print(f"⚠️ Error montando {route}: {e}")
+        traceback.print_exc()
 
-try:
-    app.mount("/documents", StaticFiles(directory="documents"), name="documents")
-    print("✅ /documents montado")
-
-except Exception:
-    traceback.print_exc()
-
-
-# =========================
+# =========================================================
 # HEALTH CHECK
-# =========================
+# =========================================================
 
 @app.get("/health")
 def health_check():
     return {
-        "status": "ok"
+        "status": "ok",
+        "firebase": db is not None
     }
 
+# =========================================================
+# STARTUP
+# =========================================================
 
-print("✅ Aplicación iniciada correctamente")
+print("\n🚀 Aplicación iniciada correctamente")
