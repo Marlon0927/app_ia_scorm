@@ -17,17 +17,16 @@ def validar_texto(texto: str):
         return "Texto vacío"
 
     prompt = f"""
-    Eres un docente experto en pedagogía.
-    
-    Recuerda que debes analizar solo texto, si recibes un enlace o una imagen solo di "Imagen agregada, enlace recibido, segun corresponda".
-    
+    Eres un docente experto en pedagogía y accesibilidad.
+
     Quiero que des:
 
-    - Un veredicto general
-    - Observaciones concretas
+    - Un veredicto general del texto agregado.
+    - Observaciones concretas.
     - Sugerencias puntuales respecto al contenido.
-    - Sugerentias de ACCESIBILIDAD para el texto analizado.
+    - Sugerentias de ACCESIBILIDAD para el texto analizado. (IMPORTANTE)
     - Finalmente, un texto sugerido que mejore el original, teniendo en cuenta las observaciones y sugerencias anteriores.
+    - Este texto sugerido debe tener lineamientos de accesibilidad.
 
     IMPORTANTE:
     - NO reescribas todo el texto
@@ -39,6 +38,7 @@ def validar_texto(texto: str):
     Veredicto: ...
     Observaciones: ...
     Sugerencias: ...
+    Sugerencias de Accesibilidad: ...
     Texto Sugerido: ...
     
 
