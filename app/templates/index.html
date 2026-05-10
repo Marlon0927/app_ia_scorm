@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -660,8 +661,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .loading-text {
@@ -706,8 +712,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .loading-text {
@@ -831,7 +842,7 @@
 
 
         /* ─── LOADING ─────────────────────────────────── */
-        
+
         function showLoading(message = 'Cargando...') {
             const overlay = document.getElementById('loadingOverlay');
             const text = overlay.querySelector('.loading-text');
@@ -889,16 +900,16 @@
         function cleanAIText(text) {
             // Remover asteriscos (*) usados para negrita
             text = text.replace(/\*\*/g, '').replace(/\*/g, '');
-            
+
             // Remover etiquetas HTML comunes
             text = text.replace(/<[^>]*>/g, '');
-            
+
             // Remover múltiples espacios
             text = text.replace(/\s+/g, ' ');
-            
+
             // Remover guiones/viñetas extras
             text = text.replace(/^[-•\s]+/gm, '');
-            
+
             return text.trim();
         }
 
@@ -980,7 +991,7 @@
                 filterInput.type = 'text';
                 filterInput.placeholder = '🔍 Buscar curso...';
                 filterInput.style.cssText = 'flex: 1; min-width: 250px; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem;';
-                
+
                 const statusFilter = document.createElement('select');
                 statusFilter.innerHTML = `
                     <option value="">📊 Todos los estados</option>
@@ -988,7 +999,7 @@
                     <option value="exported">📦 Exportados</option>
                 `;
                 statusFilter.style.cssText = 'padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; background: white; cursor: pointer;';
-                
+
                 filterContainer.append(filterInput, statusFilter);
                 container.parentElement.insertBefore(filterContainer, container);
 
@@ -1051,8 +1062,8 @@
 
                     const filtered = courses.filter(c => {
                         const matchesSearch = c.title.toLowerCase().includes(searchTerm);
-                        const matchesStatus = 
-                            statusValue === '' || 
+                        const matchesStatus =
+                            statusValue === '' ||
                             (statusValue === 'draft' && !c.url) ||
                             (statusValue === 'exported' && c.url);
                         return matchesSearch && matchesStatus;
@@ -1432,7 +1443,7 @@
             }
 
             showLoading('Guardando borrador...');
-            
+
             const course = {
                 code: localStorage.getItem('code'),
                 title,
