@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -598,6 +599,108 @@
             opacity: 1;
         }
 
+
+        /* ════ LOADING ════ */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .spinner-ring {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+
+        /* ════ LOADING ════ */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .spinner-ring {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
         /* ════ RESPONSIVE ════ */
         @media (max-width: 1200px) {
             .app-layout {
@@ -682,6 +785,22 @@
         </div>
     </div>
 
+    <!-- ════ LOADING SPINNER ════ -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner">
+            <div class="spinner-ring"></div>
+            <p class="loading-text">Cargando...</p>
+        </div>
+    </div>
+
+    <!-- ════ LOADING SPINNER ════ -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner">
+            <div class="spinner-ring"></div>
+            <p class="loading-text">Cargando...</p>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
 
     <script>
@@ -695,7 +814,23 @@
             currentCourseId: null
         };
 
+
+        /* ─── LOADING ─────────────────────────────────── */
+
+        function showLoading(message = 'Cargando...') {
+            const overlay = document.getElementById('loadingOverlay');
+            const text = overlay.querySelector('.loading-text');
+            text.textContent = message;
+            overlay.classList.add('show');
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.remove('show');
+        }
+
         /* ─── UTILIDADES ─────────────────────────────────── */
+
 
         function showView(id) {
             document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
@@ -715,11 +850,15 @@
         }
 
         async function apiFetch(url, options = {}) {
+            showLoading('Cargando...');
             try {
                 const res = await fetch(url, options);
                 if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
-                return await res.json();
+                const data = await res.json();
+                hideLoading();
+                return data;
             } catch (err) {
+                hideLoading();
                 showToast('⚠️ Error de conexión: ' + err.message);
                 throw err;
             }
@@ -735,17 +874,30 @@
         function cleanAIText(text) {
             // Remover asteriscos (*) usados para negrita
             text = text.replace(/\*\*/g, '').replace(/\*/g, '');
-            
+
             // Remover etiquetas HTML comunes
             text = text.replace(/<[^>]*>/g, '');
-            
+
             // Remover múltiples espacios
             text = text.replace(/\s+/g, ' ');
-            
+
             // Remover guiones/viñetas extras
             text = text.replace(/^[-•\s]+/gm, '');
-            
+
             return text.trim();
+        }
+
+        // ✅ FUNCIONES DE LOADING
+        function showLoading(message = 'Cargando...') {
+            const overlay = document.getElementById('loadingOverlay');
+            const text = overlay.querySelector('.loading-text');
+            text.textContent = message;
+            overlay.classList.add('show');
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.remove('show');
         }
 
         /* ─── NAVEGACIÓN ─────────────────────────────────── */
@@ -1207,6 +1359,8 @@
                 return;
             }
 
+            showLoading('Guardando borrador...');
+
             const course = {
                 code: localStorage.getItem('code'),
                 title,
@@ -1230,8 +1384,11 @@
                     state.currentCourseId = data.id;
                 }
 
+                hideLoading();
                 showToast('✅ Borrador guardado correctamente');
-            } catch (_) { }
+            } catch (_) {
+                hideLoading();
+            }
         }
 
         /* ─── EXPORTAR SCORM ─────────────────────────────── */
@@ -1248,6 +1405,8 @@
                 return;
             }
 
+            showLoading('Generando SCORM...');
+
             const course = {
                 id: state.currentCourseId,
                 code: localStorage.getItem('code'),
@@ -1262,10 +1421,13 @@
                     body: JSON.stringify(course)
                 });
 
+                hideLoading();
                 window.open(data.file_url, '_blank');
                 showToast('✅ SCORM exportado correctamente');
 
-            } catch (_) { }
+            } catch (_) {
+                hideLoading();
+            }
         }
 
         /* ─── EVENT LISTENERS ────────────────────────────── */
