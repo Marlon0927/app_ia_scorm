@@ -863,7 +863,7 @@
                 <button class="sidebar-btn" id="addDocumentBtn">📄 Documento / PDF</button>
 
                 <h3>Gestión</h3>
-                <button class="sidebar-btn" id="historyBtn">📚 Mis cursos</button>
+                <button class="sidebar-btn" id="historyBtn">📚 Mis recursos</button>
                 <button class="sidebar-btn secondary-btn" id="saveBtn">💾 Guardar progreso</button>
                 <button class="sidebar-btn primary-btn" id="generateBtn">🚀 Exportar SCORM</button>
             </nav>
@@ -888,7 +888,7 @@
     <!-- ════ HISTORIAL ════ -->
     <div class="view" id="historyView">
         <header class="topbar">
-            <div class="brand">📚 Mi biblioteca de cursos</div>
+            <div class="brand">📚 Mi biblioteca de recursos</div>
             <div style="display: flex; gap: 10px;">
                 <button id="newCourseBtn" class="btn-icon"
                     style="background: var(--primary); color: white; border-color: var(--primary);">➕ Nuevo
@@ -1118,7 +1118,7 @@
                 container.innerHTML = '';
 
                 if (!courses.length) {
-                    container.innerHTML = '<p style="text-align:center;">Aún no tienes cursos guardados.</p>';
+                    container.innerHTML = '<p style="text-align:center;">Aún no tienes recursos guardados.</p>';
                     return;
                 }
 
@@ -1133,7 +1133,7 @@
 
                 const filterInput = document.createElement('input');
                 filterInput.type = 'text';
-                filterInput.placeholder = '🔍 Buscar curso...';
+                filterInput.placeholder = '🔍 Buscar recurso...';
                 filterInput.style.cssText = 'flex: 1; min-width: 250px; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem;';
 
                 const statusFilter = document.createElement('select');
@@ -1151,7 +1151,7 @@
                 function renderCourses(coursesToRender) {
                     container.innerHTML = '';
                     if (coursesToRender.length === 0) {
-                        container.innerHTML = '<p style="text-align:center; color: var(--text-muted);">No se encontraron cursos.</p>';
+                        container.innerHTML = '<p style="text-align:center; color: var(--text-muted);">No se encontraron recursos.</p>';
                         return;
                     }
 
