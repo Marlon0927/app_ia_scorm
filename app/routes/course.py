@@ -2,6 +2,7 @@ import os
 from urllib.parse import urlparse
 import uuid
 from datetime import datetime
+from google.cloud.firestore import FieldFilter
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from pydantic import BaseModel
@@ -117,7 +118,7 @@ def save_course(payload: dict):
             doc_ref.update({
                 "title": payload.get("title", "Sin título"),
                 "pages": payload.get("pages", []),
-                "updated_at": datetime.utcnow()
+                "updated_at": datetime.utcnow().isoformat()
             })
             print(f"📝 Borrador actualizado: {current_course_id}")
             return {"id": current_course_id}
@@ -128,7 +129,7 @@ def save_course(payload: dict):
             "title": payload.get("title", "Sin título"),
             "pages": payload.get("pages", []),
             "url": None,
-            "created_at": datetime.utcnow()
+            "created_at": datetime.utcnow().isoformat()
         })
 
         print(f"✅ Nuevo borrador creado: {doc_ref[1].id}")
@@ -153,7 +154,7 @@ def update_course(course_id: str, payload: dict):
         doc_ref.update({
             "title": payload.get("title", "Sin título"),
             "pages": payload.get("pages", []),
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.utcnow().isoformat()
         })
         return {"id": course_id, "status": "updated"}
     except Exception as e:
@@ -205,7 +206,8 @@ def create_course(course: Course):
         "title": course.title,
         "pages": data["pages"],
         "url": file_url,
-        "status": "completed"
+        "status": "completed",
+        "updated_at": datetime.utcnow().isoformat()
     })
 
     return {
@@ -222,7 +224,7 @@ def create_course(course: Course):
 def get_history(code: str):
     try:
         docs = db.collection("courses") \
-            .where("code", "==", code) \
+            .where(filter=FieldFilter("code", "==", code)) \
             .stream()
 
         result = []

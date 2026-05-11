@@ -727,6 +727,91 @@
             font-weight: 500;
         }
 
+
+        /* ════ MODAL ════ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 5000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: var(--radius);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            max-width: 400px;
+            text-align: center;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-content h2 {
+            margin: 0 0 1rem 0;
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .modal-content p {
+            color: var(--text-muted);
+            margin: 0 0 1.5rem 0;
+            line-height: 1.6;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: white;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .modal-btn.primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .modal-btn.primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .modal-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
         /* ════ RESPONSIVE ════ */
         @media (max-width: 1200px) {
             .app-layout {
@@ -804,7 +889,12 @@
     <div class="view" id="historyView">
         <header class="topbar">
             <div class="brand">📚 Mi biblioteca de cursos</div>
-            <button id="backToEditorBtn" class="btn-icon">⬅ Volver al editor</button>
+            <div style="display: flex; gap: 10px;">
+                <button id="newCourseBtn" class="btn-icon"
+                    style="background: var(--primary); color: white; border-color: var(--primary);">➕ Nuevo
+                    curso</button>
+                <button id="backToEditorBtn" class="btn-icon">⬅ Volver al editor</button>
+            </div>
         </header>
         <div class="history-container">
             <div id="historyList" class="history-grid"></div>
@@ -824,6 +914,18 @@
         <div class="spinner">
             <div class="spinner-ring"></div>
             <p class="loading-text">Cargando...</p>
+        </div>
+    </div>
+
+    <!-- ════ MODAL ════ -->
+    <div id="successModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="modalTitle">✅ ¡Listo!</h2>
+            <p id="modalMessage">Tu curso ha sido guardado correctamente.</p>
+            <div class="modal-buttons">
+                <button id="modalNewBtn" class="modal-btn primary">➕ Nuevo curso</button>
+                <button id="modalCloseBtn" class="modal-btn">Seguir editando</button>
+            </div>
         </div>
     </div>
 
@@ -856,6 +958,33 @@
         }
 
         /* ─── UTILIDADES ─────────────────────────────────── */
+
+        // ════ FUNCIONES DEL MODAL ════
+        function showSuccessModal(title, message, isExport = false) {
+            const modal = document.getElementById('successModal');
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            modal.classList.add('show');
+
+            // Guardar si es export para saber qué hacer después
+            modal.dataset.isExport = isExport;
+        }
+
+        function hideModal() {
+            const modal = document.getElementById('successModal');
+            modal.classList.remove('show');
+        }
+
+        function startNewCourse() {
+            hideModal();
+            state.currentCourseId = null;
+            document.getElementById('title').value = '';
+            state.blocks = [];
+            state.editors = {};
+            render();
+            showToast('📝 Nuevo curso listo para editar');
+        }
+
 
 
         function showView(id) {
@@ -967,6 +1096,16 @@
             showView('loginView');
         }
 
+        function createNewCourse() {
+            state.currentCourseId = null;
+            document.getElementById('title').value = '';
+            state.blocks = [];
+            state.editors = {};
+            render();  // Renderizar bloques vacíos
+            goToEditor();
+            showToast('📝 Nuevo curso listo para editar');
+        }
+
         /* ─── HISTORIAL ──────────────────────────────────── */
 
         async function loadCourses() {
@@ -984,7 +1123,12 @@
                 }
 
                 // 🔍 FILTRO CON BÚSQUEDA Y ESTADO
+                // Remover barra de filtros anterior si existe
+                const oldFilter = container.parentElement.querySelector('[data-filter-container]');
+                if (oldFilter) oldFilter.remove();
+
                 const filterContainer = document.createElement('div');
+                filterContainer.setAttribute('data-filter-container', 'true');
                 filterContainer.style.cssText = 'display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;';
 
                 const filterInput = document.createElement('input');
@@ -1375,8 +1519,8 @@
             formatted = formatted.replace(/- /g, '\n• ');
 
             // Convertir saltos de línea en HTML
-            formatted = formatted.replace(/\n\n/g, '<br><br>');
-            formatted = formatted.replace(/\n/g, '<br>');
+            formatted = formatted.replace(/\n\n/g, '•');
+            formatted = formatted.replace(/\n/g, '');
 
             return formatted;
         }
@@ -1504,9 +1648,10 @@
                     body: JSON.stringify(course)
                 });
 
-                hideLoading();
                 window.open(data.file_url, '_blank');
-                showToast('✅ SCORM exportado correctamente');
+                await new Promise(r => setTimeout(r, 500));
+                hideLoading();
+                showSuccessModal('📦 ¡SCORM generado!', 'Tu curso se exportó correctamente. ¿Deseas crear uno nuevo?', true);
 
             } catch (_) {
                 hideLoading();
@@ -1523,6 +1668,9 @@
         document.getElementById('logoutBtn').addEventListener('click', logout);
         document.getElementById('historyBtn').addEventListener('click', goToHistory);
         document.getElementById('backToEditorBtn').addEventListener('click', goToEditor);
+        document.getElementById('newCourseBtn').addEventListener('click', createNewCourse);
+        document.getElementById('modalNewBtn').addEventListener('click', startNewCourse);
+        document.getElementById('modalCloseBtn').addEventListener('click', hideModal);
         document.getElementById('saveBtn').addEventListener('click', saveCourse);
         document.getElementById('generateBtn').addEventListener('click', generate);
 

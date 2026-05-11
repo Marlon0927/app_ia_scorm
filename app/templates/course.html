@@ -8,15 +8,21 @@
         body {
             font-family: Arial;
             padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
         }
 
         img {
             max-width: 100%;
+            height: auto;
+            display: block;
             margin: 10px 0;
+            border-radius: 8px;
         }
 
         iframe {
             margin: 10px 0;
+            border-radius: 8px;
         }
 
         .image-block {
@@ -28,6 +34,45 @@
 
         .doc-block {
             margin: 15px 0;
+            padding: 15px;
+            background: #f0f7ff;
+            border-radius: 8px;
+            border-left: 4px solid #0066cc;
+        }
+
+        .doc-block a {
+            color: #0066cc;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .doc-block a:hover {
+            text-decoration: underline;
+        }
+
+        .video-block {
+            margin: 20px 0;
+        }
+
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        p {
+            line-height: 1.6;
+            margin: 10px 0;
+        }
+
+        h1,
+        h2 {
+            color: #1a1a1a;
+            margin-top: 20px;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -38,7 +83,9 @@
 
     {% for page in pages %}
 
+    {% if page.title %}
     <h2>{{ page.title }}</h2>
+    {% endif %}
 
     {% for block in page.blocks %}
 
@@ -62,32 +109,35 @@
     </div>
 
     {% elif block.type == "video" %}
-    {% set video_url = block.content %}
+    <div class="video-block">
+        {% set video_url = block.content %}
 
-    {% if "watch?v=" in video_url %}
-    {% set video_id = video_url.split("watch?v=")[1].split("&")[0] %}
-    {% elif "youtu.be/" in video_url %}
-    {% set video_id = video_url.split("youtu.be/")[1].split("?")[0] %}
-    {% else %}
-    {% set video_id = "" %}
-    {% endif %}
+        {% if "watch?v=" in video_url %}
+        {% set video_id = video_url.split("watch?v=")[1].split("&")[0] %}
+        {% elif "youtu.be/" in video_url %}
+        {% set video_id = video_url.split("youtu.be/")[1].split("?")[0] %}
+        {% else %}
+        {% set video_id = "" %}
+        {% endif %}
 
-    {% if video_id %}
-    <iframe width="100%" height="300" src="https://www.youtube-nocookie.com/embed/{{ video_id }}" frameborder="0"
-        allowfullscreen>
-    </iframe>
-    {% endif %}
+        {% if video_id %}
+        <iframe width="100%" height="400" src="https://www.youtube-nocookie.com/embed/{{ video_id }}" frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+        </iframe>
+        {% endif %}
 
-    <p>
-        <a href="{{ block.content }}" target="_blank">
-            ▶ Ver video en YouTube
-        </a>
-    </p>
+        <p>
+            <a href="{{ block.content }}" target="_blank" rel="noopener noreferrer">
+                ▶ Ver video en YouTube
+            </a>
+        </p>
+    </div>
 
     {% elif block.type == "document" %}
     <div class="doc-block">
-        <a href="{{ block.content }}" download="{{ block.name }}" target="_blank">
-            📄 Descargar Documento: {{ block.name }}
+        <a href="{{ block.content }}" download="{{ block.name }}" target="_blank" rel="noopener noreferrer">
+            📄 Descargar: {{ block.name }}
         </a>
     </div>
     {% endif %}
