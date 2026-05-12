@@ -13,7 +13,7 @@
     <style>
         :root {
             --primary: #C9005A;
-            --primary-dark: #A00048;
+            --primary-dark: #a00048;
             --primary-light: #FCE4EC;
             --bg-body: #F8FAFC;
             --bg-card: #FFFFFF;
@@ -500,7 +500,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            border-left: 1px solid var(--border);
+            border-left: 2px solid var(--border);
         }
 
         .preview-header {
@@ -514,7 +514,7 @@
             width: 100%;
             height: 100%;
             background: white;
-            border-radius: 2px;
+            border-radius: 5px;
             box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
             overflow: hidden;
             border: 3px solid #334155;
@@ -1447,6 +1447,11 @@
         <input class="field-input" placeholder="Fuente o descripción breve..." value="${sanitizeText(b.caption || '')}" oninput="updateField(${i}, 'caption', this.value)" />
         <label class="field-label">Descripción educativa</label>
         <textarea class="field-input" placeholder="Explica el propósito de esta imagen..." oninput="updateField(${i}, 'description', this.value)">${sanitizeText(b.description || '')}</textarea>
+        
+        <div class="feedback" style="margin-top: 1.5rem; background: #FEF3C7; border-left-color: #F59E0B; color: #78350F;">
+          <strong style="color: #D97706;">💡 Sugerencia de accesibilidad:</strong>
+          Se debe considerar agregar el texto alternativo y el texto descriptivo para que las personas que no puedan visualizar la imagen, identifiquen su contenido por medio de esos textos.
+        </div>
       `;
                 }
 
@@ -1454,7 +1459,12 @@
                     input = `
         <label class="field-label">URL del video</label>
         <input class="field-input" placeholder="https://youtube.com/watch?v=..." value="${sanitizeText(b.content)}" oninput="update(${i}, this.value)" />
-        <small class="file-hint">Considere videos con subtitulos</small>
+        <small class="file-hint">Considere videos con subtítulos</small>
+        
+        <div class="feedback" style="margin-top: 1.5rem; background: #FEF3C7; border-left-color: #F59E0B; color: #78350F;">
+          <strong style="color: #D97706;">💡 Sugerencia de accesibilidad:</strong>
+          Es importante que cuenten con subtítulo o algún recurso textual para que quienes no puedan activar el sonido o no escuchen, puedan informarse del contenido del video.
+        </div>
       `;
                 }
 
@@ -1591,8 +1601,8 @@
             formatted = formatted.replace(/- /g, '\n• ');
 
             // Convertir saltos de línea en HTML
-            formatted = formatted.replace(/\n\n/g, '🔸');
-            formatted = formatted.replace(/\n/g, '');
+            formatted = formatted.replace(/\n\n/g, '<br><br>');
+            formatted = formatted.replace(/\n/g, '<br>');
 
             return formatted;
         }
