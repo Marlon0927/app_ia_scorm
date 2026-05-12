@@ -117,6 +117,8 @@ def save_course(payload: dict):
             doc_ref = db.collection("courses").document(current_course_id)
             doc_ref.update({
                 "title": payload.get("title", "Sin título"),
+                "subject": payload.get("subject", ""),
+                "topic": payload.get("topic", ""),
                 "pages": payload.get("pages", []),
                 "updated_at": datetime.utcnow().isoformat()
             })
@@ -127,6 +129,8 @@ def save_course(payload: dict):
         doc_ref = db.collection("courses").add({
             "code": code,
             "title": payload.get("title", "Sin título"),
+            "subject": payload.get("subject", ""),
+            "topic": payload.get("topic", ""),
             "pages": payload.get("pages", []),
             "url": None,
             "created_at": datetime.utcnow().isoformat()
@@ -153,6 +157,8 @@ def update_course(course_id: str, payload: dict):
     try:
         doc_ref.update({
             "title": payload.get("title", "Sin título"),
+            "subject": payload.get("subject", ""),
+            "topic": payload.get("topic", ""),
             "pages": payload.get("pages", []),
             "updated_at": datetime.utcnow().isoformat()
         })
@@ -204,6 +210,8 @@ def create_course(course: Course):
     # 🔥 ACTUALIZAR, NO CREAR
     doc_ref.update({
         "title": course.title,
+        "subject": data.get("subject", ""),
+        "topic": data.get("topic", ""),
         "pages": data["pages"],
         "url": file_url,
         "status": "completed",

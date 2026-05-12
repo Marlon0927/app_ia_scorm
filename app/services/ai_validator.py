@@ -32,6 +32,8 @@ def validar_texto(texto: str):
     - NO reescribas todo el texto
     - Sé breve y claro
     - Se suave con las respuestas, no seas duro ni crítico, sé constructivo y empático.
+    - Toda respuesta debe ser en solo texto, nada de caracteres especiales innecesarios, ni etiquetas html, 
+      comillas de codigo, ni nada por el estilo. Solo texto plano.
 
     FORMATO:
 

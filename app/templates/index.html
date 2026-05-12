@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor de Recursos Educativos | SCORM Creator</title>
+    <link rel="icon" type="image/x-icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75' font-weight='bold' fill='%23C9005A'>🎓</text></svg>">
     <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
@@ -512,10 +514,10 @@
             width: 100%;
             height: 100%;
             background: white;
-            border-radius: 20px;
+            border-radius: 2px;
             box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
             overflow: hidden;
-            border: 8px solid #334155;
+            border: 3px solid #334155;
             position: relative;
         }
 
@@ -872,6 +874,21 @@
                 <div class="editor-header">
                     <label for="title" class="editor-label">Título del recurso</label>
                     <input id="title" class="course-title-input" placeholder="Nombre de tu lección..." />
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;">
+                        <div>
+                            <label for="subject" class="editor-label">Asignatura</label>
+                            <input id="subject" class="course-title-input"
+                                style="font-size: 1rem; border-bottom: 1px solid var(--border);"
+                                placeholder="Ej: Matemáticas" />
+                        </div>
+                        <div>
+                            <label for="topic" class="editor-label">Tema</label>
+                            <input id="topic" class="course-title-input"
+                                style="font-size: 1rem; border-bottom: 1px solid var(--border);"
+                                placeholder="Ej: Geometría" />
+                        </div>
+                    </div>
                 </div>
                 <div id="blocks"></div>
             </main>
@@ -892,7 +909,7 @@
             <div style="display: flex; gap: 10px;">
                 <button id="newCourseBtn" class="btn-icon"
                     style="background: var(--primary); color: white; border-color: var(--primary);">➕ Nuevo
-                    curso</button>
+                    recurso</button>
                 <button id="backToEditorBtn" class="btn-icon">⬅ Volver al editor</button>
             </div>
         </header>
@@ -921,9 +938,9 @@
     <div id="successModal" class="modal-overlay">
         <div class="modal-content">
             <h2 id="modalTitle">✅ ¡Listo!</h2>
-            <p id="modalMessage">Tu curso ha sido guardado correctamente.</p>
+            <p id="modalMessage">Tu recurso ha sido guardado correctamente.</p>
             <div class="modal-buttons">
-                <button id="modalNewBtn" class="modal-btn primary">➕ Nuevo curso</button>
+                <button id="modalNewBtn" class="modal-btn primary">➕ Nuevo recurso</button>
                 <button id="modalCloseBtn" class="modal-btn">Seguir editando</button>
             </div>
         </div>
@@ -939,7 +956,9 @@
             editors: {},
             previewTimeout: null,
             aiTimers: {},
-            currentCourseId: null
+            currentCourseId: null,
+            subject: '',
+            topic: ''
         };
 
 
@@ -979,10 +998,12 @@
             hideModal();
             state.currentCourseId = null;
             document.getElementById('title').value = '';
+            document.getElementById('subject').value = '';
+            document.getElementById('topic').value = '';
             state.blocks = [];
             state.editors = {};
             render();
-            showToast('📝 Nuevo curso listo para editar');
+            showToast('📝 Nuevo recurso listo para editar');
         }
 
 
@@ -1099,11 +1120,13 @@
         function createNewCourse() {
             state.currentCourseId = null;
             document.getElementById('title').value = '';
+            document.getElementById('subject').value = '';
+            document.getElementById('topic').value = '';
             state.blocks = [];
             state.editors = {};
-            render();  // Renderizar bloques vacíos
+            render();
             goToEditor();
-            showToast('📝 Nuevo curso listo para editar');
+            showToast('📝 Nuevo recurso listo para editar');
         }
 
         /* ─── HISTORIAL ──────────────────────────────────── */
@@ -1136,6 +1159,19 @@
                 filterInput.placeholder = '🔍 Buscar recurso...';
                 filterInput.style.cssText = 'flex: 1; min-width: 250px; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem;';
 
+                // Obtener asignaturas únicas
+                const subjects = [...new Set(courses.map(c => c.subject).filter(Boolean))];
+
+                const subjectFilter = document.createElement('select');
+                subjectFilter.innerHTML = '<option value="">📚 Todas las asignaturas</option>';
+                subjects.forEach(subject => {
+                    const option = document.createElement('option');
+                    option.value = subject;
+                    option.textContent = subject;
+                    subjectFilter.appendChild(option);
+                });
+                subjectFilter.style.cssText = 'padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; background: white; cursor: pointer;';
+
                 const statusFilter = document.createElement('select');
                 statusFilter.innerHTML = `
                     <option value="">📊 Todos los estados</option>
@@ -1144,7 +1180,7 @@
                 `;
                 statusFilter.style.cssText = 'padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; background: white; cursor: pointer;';
 
-                filterContainer.append(filterInput, statusFilter);
+                filterContainer.append(filterInput, subjectFilter, statusFilter);
                 container.parentElement.insertBefore(filterContainer, container);
 
                 // Función para renderizar cursos filtrados
@@ -1162,13 +1198,37 @@
                         const content = document.createElement('div');
                         content.className = 'course-card-content';
 
+                        // Título
                         const title = document.createElement('h3');
                         title.textContent = sanitizeText(c.title || 'Sin título');
+                        title.style.margin = '0 0 0.75rem 0';
 
-                        const meta = document.createElement('p');
-                        meta.textContent = c.url ? '📦 Exportado a SCORM' : '📝 Borrador';
+                        // Asignatura
+                        const subject = document.createElement('p');
+                        subject.style.margin = '0.3rem 0';
+                        subject.style.color = '#666';
+                        subject.textContent = c.subject ? `📚 ${sanitizeText(c.subject)}` : '';
 
-                        content.append(title, meta);
+                        // Tema
+                        const topic = document.createElement('p');
+                        topic.style.margin = '0.3rem 0';
+                        topic.style.color = '#666';
+                        topic.textContent = c.topic ? `📖 ${sanitizeText(c.topic)}` : '';
+
+                        // Estado
+                        const status = document.createElement('p');
+                        status.style.margin = '0.5rem 0 0 0';
+                        status.style.fontWeight = 'bold';
+                        status.style.fontSize = '0.9rem';
+                        if (c.url) {
+                            status.textContent = '✅ Exportado a SCORM';
+                            status.style.color = '#22C55E';
+                        } else {
+                            status.textContent = '⏳ Borrador (no exportado)';
+                            status.style.color = '#F59E0B';
+                        }
+
+                        content.append(title, subject, topic, status);
 
                         const actions = document.createElement('div');
                         actions.className = 'course-card-actions';
@@ -1184,7 +1244,14 @@
                         dlLink.href = c.url || '#';
                         dlLink.target = '_blank';
                         dlLink.rel = 'noopener noreferrer';
-                        if (!c.url) dlLink.style.opacity = '0.4';
+
+                        // Deshabilitar si no está exportado
+                        if (!c.url) {
+                            dlLink.style.opacity = '0.5';
+                            dlLink.style.pointerEvents = 'none';
+                            dlLink.style.cursor = 'not-allowed';
+                            dlLink.title = 'Exporta el recurso primero';
+                        }
 
                         const delBtn = document.createElement('button');
                         delBtn.className = 'btn-icon';
@@ -1202,21 +1269,24 @@
                 // Filtrar cuando escriba o cambio estado
                 function applyFilters() {
                     const searchTerm = filterInput.value.toLowerCase();
+                    const subjectValue = subjectFilter.value;
                     const statusValue = statusFilter.value;
 
                     const filtered = courses.filter(c => {
                         const matchesSearch = c.title.toLowerCase().includes(searchTerm);
+                        const matchesSubject = subjectValue === '' || c.subject === subjectValue;
                         const matchesStatus =
                             statusValue === '' ||
                             (statusValue === 'draft' && !c.url) ||
                             (statusValue === 'exported' && c.url);
-                        return matchesSearch && matchesStatus;
+                        return matchesSearch && matchesSubject && matchesStatus;
                     });
 
                     renderCourses(filtered);
                 }
 
                 filterInput.addEventListener('input', applyFilters);
+                subjectFilter.addEventListener('change', applyFilters);
                 statusFilter.addEventListener('change', applyFilters);
 
             } catch (_) { }
@@ -1225,6 +1295,8 @@
         function editCourse(c) {
             state.currentCourseId = c.id;
             document.getElementById('title').value = c.title || '';
+            document.getElementById('subject').value = c.subject || '';
+            document.getElementById('topic').value = c.topic || '';
             state.blocks = (c.pages && c.pages[0] && c.pages[0].blocks) ? c.pages[0].blocks : [];
             state.editors = {};
             render();
@@ -1232,11 +1304,11 @@
         }
 
         async function deleteCourse(id) {
-            if (!confirm('¿Eliminar este curso? Esta acción no se puede deshacer.')) return;
+            if (!confirm('¿Eliminar este recurso? Esta acción no se puede deshacer.')) return;
 
             try {
                 await apiFetch(`/course/${id}`, { method: 'DELETE' });
-                showToast('✅ Curso eliminado');
+                showToast('✅ Recurso eliminado');
                 loadCourses();
             } catch (_) { }
         }
@@ -1346,7 +1418,7 @@
                 container.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">📋</div>
-        <p>Usa el panel izquierdo para agregar bloques de contenido a tu curso.</p>
+        <p>Usa el panel izquierdo para agregar bloques de contenido a tu recurso.</p>
       </div>
     `;
                 debouncePreview();
@@ -1519,8 +1591,8 @@
             formatted = formatted.replace(/- /g, '\n• ');
 
             // Convertir saltos de línea en HTML
-            formatted = formatted.replace(/\n\n/g, '•');
-            formatted = formatted.replace(/\n/g, '');
+            formatted = formatted.replace(/\n\n/g, '<br><br>');
+            formatted = formatted.replace(/\n/g, '<br>');
 
             return formatted;
         }
@@ -1591,6 +1663,8 @@
             const course = {
                 code: localStorage.getItem('code'),
                 title,
+                subject: document.getElementById('subject').value.trim(),
+                topic: document.getElementById('topic').value.trim(),
                 pages: [{ title: '', blocks: state.blocks }]
             };
 
@@ -1628,7 +1702,7 @@
             }
 
             if (!state.currentCourseId) {
-                showToast('⚠️ Debes guardar el curso primero');
+                showToast('⚠️ Debes guardar el recurso primero');
                 return;
             }
 
@@ -1638,6 +1712,8 @@
                 id: state.currentCourseId,
                 code: localStorage.getItem('code'),
                 title,
+                subject: document.getElementById('subject').value.trim(),
+                topic: document.getElementById('topic').value.trim(),
                 pages: [{ title: '', blocks: state.blocks }]
             };
 
@@ -1651,7 +1727,7 @@
                 window.open(data.file_url, '_blank');
                 await new Promise(r => setTimeout(r, 500));
                 hideLoading();
-                showSuccessModal('📦 ¡SCORM generado!', 'Tu curso se exportó correctamente. ¿Deseas crear uno nuevo?', true);
+                showSuccessModal('📦 ¡SCORM generado!', 'Tu recurso se exportó correctamente. ¿Deseas crear uno nuevo?', true);
 
             } catch (_) {
                 hideLoading();
