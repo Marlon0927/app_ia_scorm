@@ -1601,8 +1601,8 @@
             formatted = formatted.replace(/- /g, '\n• ');
 
             // Convertir saltos de línea en HTML
-            formatted = formatted.replace(/\n\n/g, '<br><br>');
-            formatted = formatted.replace(/\n/g, '<br>');
+            formatted = formatted.replace(/\n\n/g, '');
+            formatted = formatted.replace(/\n/g, '');
 
             return formatted;
         }
